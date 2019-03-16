@@ -1,0 +1,9 @@
+[package]
+name = "tree-rs"
+version = "0.1.0"
+authors = ["grey <fairingrey@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+structopt = "0.2.15"
+walkdir = "2.2.7"

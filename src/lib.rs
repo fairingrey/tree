@@ -22,23 +22,26 @@ pub struct Counts {
 pub fn walk_tree<P: AsRef<Path>>(
     handle: &mut impl Write,
     path: P,
-    prefix: &str,
     counts: &mut Counts,
 ) -> Result<(), ExitFailure> {
     let walker = WalkDir::new(path)
+        .sort_by(|a,b| a.file_name().cmp(b.file_name()))
         .into_iter()
-        .filter_entry(|e| !is_hidden(e));
+        .filter_entry(|e| !is_hidden(e))
+        .peekable();
 
     for entry in walker {
         let entry = entry?;
         let filename = entry.file_name().to_str().unwrap();
+        let depth = entry.depth();
 
         if entry.file_type().is_dir() {
             counts.dirs += 1;
         } else if entry.file_type().is_file() {
             counts.files += 1;
         }
-        writeln!(handle, "{}", entry.file_name().to_str().unwrap())?;
+
+        writeln!(handle, "{}[{}] {}", &"    ".repeat(depth), &depth.to_string(), filename)?;
     }
     Ok(())
 }

@@ -17,7 +17,7 @@ fn main() -> Result<(), ExitFailure> {
 
     let mut counts: Counts = Default::default();
 
-    tree::walk_tree(&mut handle, path, "", &mut counts)?;
+    tree::walk_tree(&mut handle, path, &mut counts)?;
 
     writeln!(
         handle,

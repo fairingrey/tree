@@ -10,7 +10,7 @@ use regex::Regex;
 pub mod args;
 
 lazy_static! {
-    pub static ref RE_HIDDEN_FILENAME: Regex = Regex::new(r"^\..*$").unwrap();
+    pub static ref RE_HIDDEN_FILENAME: Regex = Regex::new(r"^\..+$").unwrap();
 }
 
 pub fn write_tree(path: PathBuf, mut handle: impl Write) -> Result<(), ExitFailure> {
@@ -22,7 +22,6 @@ pub fn write_tree(path: PathBuf, mut handle: impl Write) -> Result<(), ExitFailu
 }
 
 pub fn is_hidden(entry: &DirEntry) -> bool {
-    dbg!(entry.file_name());
     entry.file_name()
         .to_str()
         .map(|s| RE_HIDDEN_FILENAME.is_match(s))

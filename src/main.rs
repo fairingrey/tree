@@ -1,8 +1,8 @@
 use exitfailure::ExitFailure;
-use std::io::stdout;
+use std::io::{stdout, Write};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use tree;
+use tree::{self, Counts};
 
 fn main() -> Result<(), ExitFailure> {
     let opt = tree::args::Opt::from_args();
@@ -13,9 +13,17 @@ fn main() -> Result<(), ExitFailure> {
     };
 
     let stdout = stdout();
-    let handle = stdout.lock();
+    let mut handle = stdout.lock();
 
-    tree::write_tree(path, handle)?;
+    let mut counts: Counts = Default::default();
+
+    tree::walk_tree(&mut handle, path, "", &mut counts)?;
+
+    writeln!(
+        handle,
+        "\n{} directories, {} files",
+        counts.dirs, counts.files
+    )?;
 
     Ok(())
 }

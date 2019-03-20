@@ -2,10 +2,10 @@
 extern crate lazy_static;
 
 use exitfailure::ExitFailure;
-use std::io::prelude::*;
-use std::path::PathBuf;
-use walkdir::{DirEntry, WalkDir};
 use regex::Regex;
+use std::io::prelude::*;
+use std::path::Path;
+use walkdir::{DirEntry, WalkDir};
 
 pub mod args;
 
@@ -15,30 +15,37 @@ lazy_static! {
 
 #[derive(Debug, Default)]
 pub struct Counts {
-    dirs: usize,
-    files: isize,
+    pub dirs: isize,
+    pub files: isize,
 }
 
-pub fn write_tree(path: PathBuf, mut handle: impl Write) -> Result<(), ExitFailure> {
-    let walker = WalkDir::new(path).into_iter();
-    let mut counts: Counts = Default::default();
-    for entry in walker.filter_entry(|e| !is_hidden(e)).peekable() {
+pub fn walk_tree<P: AsRef<Path>>(
+    handle: &mut impl Write,
+    path: P,
+    prefix: &str,
+    counts: &mut Counts,
+) -> Result<(), ExitFailure> {
+    let walker = WalkDir::new(path)
+        .into_iter()
+        .filter_entry(|e| !is_hidden(e));
+
+    for entry in walker {
         let entry = entry?;
+        let filename = entry.file_name().to_str().unwrap();
 
         if entry.file_type().is_dir() {
             counts.dirs += 1;
         } else if entry.file_type().is_file() {
             counts.files += 1;
         }
-
-        write!(handle, "{}\n", entry.file_name().to_str().unwrap())?;
+        writeln!(handle, "{}", entry.file_name().to_str().unwrap())?;
     }
-    write!(handle, "\n{} directories, {} files\n", counts.dirs, counts.files)?;
     Ok(())
 }
 
 pub fn is_hidden(entry: &DirEntry) -> bool {
-    entry.file_name()
+    entry
+        .file_name()
         .to_str()
         .map(|s| RE_HIDDEN_FILENAME.is_match(s))
         .unwrap_or(false)

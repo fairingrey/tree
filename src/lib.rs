@@ -5,7 +5,7 @@ use exitfailure::ExitFailure;
 use regex::Regex;
 use std::io::prelude::*;
 use std::path::Path;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::{DirEntry, WalkDir, Error as WalkError};
 
 pub mod args;
 
@@ -28,10 +28,9 @@ pub fn walk_tree<P: AsRef<Path>>(
         .sort_by(|a,b| a.file_name().cmp(b.file_name()))
         .into_iter()
         .filter_entry(|e| !is_hidden(e))
-        .peekable();
+        .collect::<Result<Vec<DirEntry>, WalkError>>()?;
 
-    for entry in walker {
-        let entry = entry?;
+    for (i, entry) in walker.iter().enumerate() {
         let filename = entry.file_name().to_str().unwrap();
         let depth = entry.depth();
 
@@ -41,7 +40,25 @@ pub fn walk_tree<P: AsRef<Path>>(
             counts.files += 1;
         }
 
-        writeln!(handle, "{}[{}] {}", &"    ".repeat(depth), &depth.to_string(), filename)?;
+        if depth == 0 {
+            writeln!(handle, "[{}] {}", &depth.to_string(), filename)?;
+            continue;
+        }
+
+        for d in 1..=depth {
+            let lookahead = &walker[i..walker.len()].iter().any(|entry| entry.depth() == d);
+            if *lookahead {
+                if d == depth {
+                    write!(handle, "{}", "├── ")?;
+                } else {
+                    write!(handle, "{}", "│   ")?;
+                }
+            } else {
+                write!(handle, "{}", "    ")?;
+            }
+        }
+
+        writeln!(handle, "[{}] {}", &depth.to_string(), filename)?;
     }
     Ok(())
 }

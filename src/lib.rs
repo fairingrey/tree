@@ -13,11 +13,27 @@ lazy_static! {
     pub static ref RE_HIDDEN_FILENAME: Regex = Regex::new(r"^\..+$").unwrap();
 }
 
+#[derive(Debug, Default)]
+pub struct Counts {
+    dirs: usize,
+    files: isize,
+}
+
 pub fn write_tree(path: PathBuf, mut handle: impl Write) -> Result<(), ExitFailure> {
     let walker = WalkDir::new(path).into_iter();
-    for entry in walker.filter_entry(|e| !is_hidden(e)) {
-        println!("{}", entry?.file_name().to_str().unwrap());
+    let mut counts: Counts = Default::default();
+    for entry in walker.filter_entry(|e| !is_hidden(e)).peekable() {
+        let entry = entry?;
+
+        if entry.file_type().is_dir() {
+            counts.dirs += 1;
+        } else if entry.file_type().is_file() {
+            counts.files += 1;
+        }
+
+        write!(handle, "{}\n", entry.file_name().to_str().unwrap())?;
     }
+    write!(handle, "\n{} directories, {} files\n", counts.dirs, counts.files)?;
     Ok(())
 }
 

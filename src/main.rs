@@ -7,17 +7,18 @@ use tree::{self, Counts};
 fn main() -> Result<(), ExitFailure> {
     let opt = tree::args::Opt::from_args();
 
-    let path: PathBuf = match opt.path {
+    let root: PathBuf = match opt.path {
         Some(path) => path,
         None => PathBuf::from("."),
     };
+    let mut counts: Counts = Default::default();
 
     let stdout = stdout();
     let mut handle = stdout.lock();
 
-    let mut counts: Counts = Default::default();
+    writeln!(handle, "{}", root.to_str().unwrap())?;
 
-    tree::walk_tree(&mut handle, path, &mut counts)?;
+    tree::walk_tree(&mut handle, root.to_str().unwrap(), "", &mut counts)?;
 
     writeln!(
         handle,

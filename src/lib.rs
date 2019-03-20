@@ -3,9 +3,9 @@ extern crate lazy_static;
 
 use exitfailure::ExitFailure;
 use regex::Regex;
+use std::fs::{self, DirEntry};
 use std::io::prelude::*;
-use std::path::Path;
-use walkdir::{DirEntry, WalkDir, Error as WalkError};
+use std::path::{Path, PathBuf};
 
 pub mod args;
 
@@ -19,47 +19,65 @@ pub struct Counts {
     pub files: isize,
 }
 
-pub fn walk_tree<P: AsRef<Path>>(
+// some code taken from https://github.com/kddeisz/tree/blob/master/tree.rs
+pub fn walk_tree<P: AsRef<Path> + ToString>(
     handle: &mut impl Write,
-    path: P,
+    root: P,
+    prefix: &str,
     counts: &mut Counts,
 ) -> Result<(), ExitFailure> {
-    let walker = WalkDir::new(path)
-        .sort_by(|a,b| a.file_name().cmp(b.file_name()))
-        .into_iter()
-        .filter_entry(|e| !is_hidden(e))
-        .collect::<Result<Vec<DirEntry>, WalkError>>()?;
+    let mut paths = fs::read_dir(&root)?
+        .filter_map(|entry| {
+            let entry = entry.unwrap();
+            if !is_hidden(&entry) {
+                Some(entry.path())
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<PathBuf>>();
 
-    for (i, entry) in walker.iter().enumerate() {
-        let filename = entry.file_name().to_str().unwrap();
-        let depth = entry.depth();
+    paths.sort_by(|a, b| {
+        let a = a.file_name().unwrap().to_str().unwrap();
+        let b = b.file_name().unwrap().to_str().unwrap();
+        a.cmp(b)
+    });
 
-        if entry.file_type().is_dir() {
+    let mut index = paths.len();
+
+    for path in paths {
+        let name = path.file_name().unwrap().to_str().unwrap();
+        index -= 1;
+
+        if path.is_dir() {
             counts.dirs += 1;
-        } else if entry.file_type().is_file() {
+        } else if path.is_file() {
             counts.files += 1;
         }
 
-        if depth == 0 {
-            writeln!(handle, "[{}] {}", &depth.to_string(), filename)?;
-            continue;
-        }
-
-        for d in 1..=depth {
-            let lookahead = &walker[i..walker.len()].iter().any(|entry| entry.depth() == d);
-            if *lookahead {
-                if d == depth {
-                    write!(handle, "{}", "├── ")?;
-                } else {
-                    write!(handle, "{}", "│   ")?;
-                }
-            } else {
-                write!(handle, "{}", "    ")?;
+        if index == 0 {
+            writeln!(handle, "{}└── {}", prefix, name)?;
+            if path.is_dir() {
+                walk_tree(
+                    handle,
+                    &format!("{}/{}", &root.to_string(), name),
+                    &format!("{}    ", prefix),
+                    counts,
+                )?;
+            }
+        } else {
+            writeln!(handle, "{}├── {}", prefix, name)?;
+            if path.is_dir() {
+                walk_tree(
+                    handle,
+                    &format!("{}/{}", &root.to_string(), name),
+                    &format!("{}│   ", prefix),
+                    counts,
+                )?;
             }
         }
-
-        writeln!(handle, "[{}] {}", &depth.to_string(), filename)?;
     }
+
     Ok(())
 }
 

@@ -1,27 +1,21 @@
 use exitfailure::ExitFailure;
+use std::io::stdout;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use walkdir::{DirEntry, WalkDir};
-
-/// Search for a pattern in a file and display the lines that contain it.
-#[derive(StructOpt)]
-struct Cli {
-    /// The path to the file to read
-    #[structopt(parse(from_os_str))]
-    path: Option<PathBuf>,
-}
+use tree;
 
 fn main() -> Result<(), ExitFailure> {
-    let args = Cli::from_args();
+    let opt = tree::args::Opt::from_args();
 
-    let path: PathBuf = match args.path {
+    let path: PathBuf = match opt.path {
         Some(path) => path,
         None => PathBuf::from("."),
     };
 
-    let walker = WalkDir::new(path);
-    for entry in walker {
-        println!("{}", entry?.path().display());
-    }
+    let stdout = stdout();
+    let handle = stdout.lock();
+
+    tree::write_tree(path, handle)?;
+
     Ok(())
 }

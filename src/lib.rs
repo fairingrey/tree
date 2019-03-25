@@ -24,12 +24,13 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
     handle: &mut impl Write,
     root: P,
     prefix: &str,
+    all_files: bool,
     counts: &mut Counts,
 ) -> Result<(), ExitFailure> {
     let mut paths = fs::read_dir(&root)?
         .filter_map(|entry| {
             let entry = entry.unwrap();
-            if !is_hidden(&entry) {
+            if all_files || !is_hidden(&entry) {
                 Some(entry.path())
             } else {
                 None
@@ -62,6 +63,7 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                     handle,
                     &format!("{}/{}", &root.to_string(), name),
                     &format!("{}    ", prefix),
+                    all_files,
                     counts,
                 )?;
             }
@@ -72,6 +74,7 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                     handle,
                     &format!("{}/{}", &root.to_string(), name),
                     &format!("{}│   ", prefix),
+                    all_files,
                     counts,
                 )?;
             }

@@ -26,8 +26,16 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
     prefix: &str,
     all_files: bool,
     only_dirs: bool,
+    current_depth: usize,
+    max_depth: Option<usize>,
     counts: &mut Counts,
 ) -> Result<(), ExitFailure> {
+    if let Some(max_depth) = max_depth {
+        if current_depth > max_depth {
+            return Ok(());
+        }
+    }
+
     let mut paths = fs::read_dir(&root)?
         .filter_map(|entry| {
             let entry = entry.unwrap();
@@ -70,6 +78,8 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                     &format!("{}    ", prefix),
                     all_files,
                     only_dirs,
+                    current_depth + 1,
+                    max_depth,
                     counts,
                 )?;
             }
@@ -82,6 +92,8 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                     &format!("{}│   ", prefix),
                     all_files,
                     only_dirs,
+                    current_depth + 1,
+                    max_depth,
                     counts,
                 )?;
             }

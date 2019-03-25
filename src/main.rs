@@ -18,7 +18,16 @@ fn main() -> Result<(), ExitFailure> {
 
     writeln!(handle, "{}", root.to_str().unwrap())?;
 
-    tree::walk_tree(&mut handle, root.to_str().unwrap(), "", opt.all_files, opt.only_dirs, &mut counts)?;
+    tree::walk_tree(
+        &mut handle,
+        root.to_str().unwrap(),
+        "",
+        opt.all_files,
+        opt.only_dirs,
+        1,
+        opt.max_depth,
+        &mut counts,
+    )?;
 
     writeln!(
         handle,

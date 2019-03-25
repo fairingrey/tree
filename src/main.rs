@@ -27,11 +27,13 @@ fn main() -> Result<(), ExitFailure> {
         &mut counts,
     )?;
 
-    writeln!(
-        handle,
-        "\n{} directories, {} files",
-        counts.dirs, counts.files
-    )?;
+    if !args.no_report {
+        writeln!(
+            handle,
+            "\n{} directories, {} files",
+            counts.dirs, counts.files
+        )?;
+    }
 
     Ok(())
 }

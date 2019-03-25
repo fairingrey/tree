@@ -25,4 +25,15 @@ pub struct Opt {
 
     #[structopt(short = "I")]
     pub ignore_pattern: Option<Regex>,
+
+    // TODO
+    #[structopt(long = "ignore-case")]
+    pub ignore_case: bool,
+
+    #[structopt(long = "noreport")]
+    pub no_report: bool,
+
+    // TODO
+    #[structopt(long = "filelimit")]
+    pub file_limit: Option<usize>,
 }

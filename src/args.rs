@@ -14,6 +14,9 @@ pub struct Opt {
     #[structopt(short = "d")]
     pub only_dirs: bool,
 
+    #[structopt(short = "f")]
+    pub full_paths: bool,
+
     #[structopt(short = "L")]
     pub max_depth: Option<usize>,
 

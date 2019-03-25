@@ -78,6 +78,13 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
 
     for path in paths {
         let filename = path.file_name().unwrap().to_str().unwrap();
+
+        let output_str = if args.full_paths {
+            path.to_str().unwrap()
+        } else {
+            filename
+        };
+
         index -= 1;
 
         if path.is_dir() {
@@ -88,7 +95,7 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
 
         if index == 0 {
             if path.is_dir() {
-                writeln!(handle, "{}└── {}", prefix, filename)?;
+                writeln!(handle, "{}└── {}", prefix, output_str)?;
                 walk_tree(
                     handle,
                     args,
@@ -98,10 +105,10 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                     counts,
                 )?;
             } else {
-                writeln!(handle, "{}└── {}", prefix, filename)?;
+                writeln!(handle, "{}└── {}", prefix, output_str)?;
             }
         } else if path.is_dir() {
-            writeln!(handle, "{}├── {}", prefix, filename)?;
+            writeln!(handle, "{}├── {}", prefix, output_str)?;
             walk_tree(
                 handle,
                 args,
@@ -111,7 +118,7 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                 counts,
             )?;
         } else {
-            writeln!(handle, "{}├── {}", prefix, filename)?;
+            writeln!(handle, "{}├── {}", prefix, output_str)?;
         }
     }
 

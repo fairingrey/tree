@@ -1,3 +1,4 @@
+use regex::Regex;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -15,4 +16,10 @@ pub struct Opt {
 
     #[structopt(short = "L")]
     pub max_depth: Option<usize>,
+
+    #[structopt(short = "P")]
+    pub match_pattern: Option<Regex>,
+
+    #[structopt(short = "I")]
+    pub ignore_pattern: Option<Regex>,
 }

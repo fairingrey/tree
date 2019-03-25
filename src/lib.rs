@@ -1,12 +1,12 @@
 #[macro_use]
 extern crate lazy_static;
 
+use crate::args::Opt;
 use exitfailure::ExitFailure;
 use regex::Regex;
 use std::fs::{self, DirEntry};
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
-use crate::args::Opt;
 
 pub mod args;
 
@@ -39,15 +39,33 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
         .filter_map(|entry| {
             let entry = entry.unwrap();
             if args.all_files || !is_hidden(&entry) {
-                if !args.only_dirs || entry.file_type().unwrap().is_dir() {
-                    Some(entry.path())
-                } else {
-                    None
-                }
+                Some(entry)
             } else {
                 None
             }
         })
+        .filter(|entry| !args.only_dirs || entry.file_type().unwrap().is_dir())
+        .filter(|entry| {
+            if entry.path().is_file() {
+                let path = entry.path();
+                let filename = path.file_name().unwrap().to_str().unwrap();
+                let mut will_yield = true;
+                if let Some(match_pattern) = &args.match_pattern {
+                    if !match_pattern.is_match(filename) {
+                        will_yield = false;
+                    }
+                }
+                if let Some(ignore_pattern) = &args.ignore_pattern {
+                    if ignore_pattern.is_match(filename) {
+                        will_yield = false;
+                    }
+                }
+                will_yield
+            } else {
+                true
+            }
+        })
+        .map(|entry| entry.path())
         .collect::<Vec<PathBuf>>();
 
     paths.sort_by(|a, b| {
@@ -59,7 +77,7 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
     let mut index = paths.len();
 
     for path in paths {
-        let name = path.file_name().unwrap().to_str().unwrap();
+        let filename = path.file_name().unwrap().to_str().unwrap();
         index -= 1;
 
         if path.is_dir() {
@@ -69,29 +87,31 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
         }
 
         if index == 0 {
-            writeln!(handle, "{}└── {}", prefix, name)?;
             if path.is_dir() {
+                writeln!(handle, "{}└── {}", prefix, filename)?;
                 walk_tree(
                     handle,
                     args,
-                    &format!("{}/{}", &root.to_string(), name),
+                    &format!("{}/{}", &root.to_string(), filename),
                     &format!("{}    ", prefix),
                     current_depth + 1,
                     counts,
                 )?;
+            } else {
+                writeln!(handle, "{}└── {}", prefix, filename)?;
             }
+        } else if path.is_dir() {
+            writeln!(handle, "{}├── {}", prefix, filename)?;
+            walk_tree(
+                handle,
+                args,
+                &format!("{}/{}", &root.to_string(), filename),
+                &format!("{}│   ", prefix),
+                current_depth + 1,
+                counts,
+            )?;
         } else {
-            writeln!(handle, "{}├── {}", prefix, name)?;
-            if path.is_dir() {
-                walk_tree(
-                    handle,
-                    args,
-                    &format!("{}/{}", &root.to_string(), name),
-                    &format!("{}│   ", prefix),
-                    current_depth + 1,
-                    counts,
-                )?;
-            }
+            writeln!(handle, "{}├── {}", prefix, filename)?;
         }
     }
 

@@ -5,10 +5,10 @@ use structopt::StructOpt;
 use tree::{self, Counts};
 
 fn main() -> Result<(), ExitFailure> {
-    let opt = tree::args::Opt::from_args();
+    let args = tree::args::Opt::from_args();
 
-    let root: PathBuf = match opt.path {
-        Some(path) => path,
+    let root: PathBuf = match &args.path {
+        Some(path) => path.to_path_buf(),
         None => PathBuf::from("."),
     };
     let mut counts: Counts = Default::default();
@@ -20,12 +20,10 @@ fn main() -> Result<(), ExitFailure> {
 
     tree::walk_tree(
         &mut handle,
+        &args,
         root.to_str().unwrap(),
         "",
-        opt.all_files,
-        opt.only_dirs,
         1,
-        opt.max_depth,
         &mut counts,
     )?;
 

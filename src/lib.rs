@@ -6,6 +6,7 @@ use regex::Regex;
 use std::fs::{self, DirEntry};
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use crate::args::Opt;
 
 pub mod args;
 
@@ -22,15 +23,13 @@ pub struct Counts {
 // some code taken from https://github.com/kddeisz/tree/blob/master/tree.rs
 pub fn walk_tree<P: AsRef<Path> + ToString>(
     handle: &mut impl Write,
+    args: &Opt,
     root: P,
     prefix: &str,
-    all_files: bool,
-    only_dirs: bool,
     current_depth: usize,
-    max_depth: Option<usize>,
     counts: &mut Counts,
 ) -> Result<(), ExitFailure> {
-    if let Some(max_depth) = max_depth {
+    if let Some(max_depth) = args.max_depth {
         if current_depth > max_depth {
             return Ok(());
         }
@@ -39,8 +38,8 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
     let mut paths = fs::read_dir(&root)?
         .filter_map(|entry| {
             let entry = entry.unwrap();
-            if all_files || !is_hidden(&entry) {
-                if !only_dirs || entry.file_type().unwrap().is_dir() {
+            if args.all_files || !is_hidden(&entry) {
+                if !args.only_dirs || entry.file_type().unwrap().is_dir() {
                     Some(entry.path())
                 } else {
                     None
@@ -74,12 +73,10 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
             if path.is_dir() {
                 walk_tree(
                     handle,
+                    args,
                     &format!("{}/{}", &root.to_string(), name),
                     &format!("{}    ", prefix),
-                    all_files,
-                    only_dirs,
                     current_depth + 1,
-                    max_depth,
                     counts,
                 )?;
             }
@@ -88,12 +85,10 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
             if path.is_dir() {
                 walk_tree(
                     handle,
+                    args,
                     &format!("{}/{}", &root.to_string(), name),
                     &format!("{}│   ", prefix),
-                    all_files,
-                    only_dirs,
                     current_depth + 1,
-                    max_depth,
                     counts,
                 )?;
             }

@@ -7,6 +7,9 @@ pub struct Opt {
     #[structopt(parse(from_os_str))]
     pub path: Option<PathBuf>,
 
-    #[structopt(short = "a", long = "all")]
+    #[structopt(short = "a")]
     pub all_files: bool,
+
+    #[structopt(short = "d")]
+    pub only_dirs: bool,
 }

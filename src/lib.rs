@@ -35,6 +35,12 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
         }
     }
 
+    if let Some(file_limit) = args.file_limit {
+        if fs::read_dir(&root)?.count() > file_limit {
+            return Ok(());
+        }
+    }
+
     let mut paths = fs::read_dir(&root)?
         .filter_map(|entry| {
             let entry = entry.unwrap();

@@ -1,7 +1,8 @@
 use exitfailure::ExitFailure;
-use std::io::{stdout, Write};
+use std::io::Write;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use termcolor::{ColorChoice, StandardStream};
 use tree::{self, Counts};
 
 fn main() -> Result<(), ExitFailure> {
@@ -13,7 +14,7 @@ fn main() -> Result<(), ExitFailure> {
     };
     let mut counts: Counts = Default::default();
 
-    let stdout = stdout();
+    let stdout = StandardStream::stdout(ColorChoice::Always);
     let mut handle = stdout.lock();
 
     write!(handle, "{}", root.to_str().unwrap())?;

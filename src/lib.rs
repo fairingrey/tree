@@ -5,8 +5,8 @@ use crate::args::Opt;
 use exitfailure::ExitFailure;
 use regex::Regex;
 use std::fs::{self, DirEntry};
-use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use termcolor::{Color, ColorSpec, WriteColor};
 
 pub mod args;
 
@@ -22,13 +22,15 @@ pub struct Counts {
 
 // some code taken from https://github.com/kddeisz/tree/blob/master/tree.rs
 pub fn walk_tree<P: AsRef<Path> + ToString>(
-    handle: &mut impl Write,
+    handle: &mut impl WriteColor,
     args: &Opt,
     root: P,
     prefix: &str,
     current_depth: usize,
     counts: &mut Counts,
 ) -> Result<(), ExitFailure> {
+    handle.reset()?;
+
     if let Some(max_depth) = args.max_depth {
         if current_depth > max_depth {
             return Ok(());
@@ -77,12 +79,10 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                 file_count
             )?;
             return Ok(());
-        } else {
-            writeln!(handle)?;
         }
-    } else {
-        writeln!(handle)?;
     }
+
+    writeln!(handle)?;
 
     paths.sort_by(|a, b| {
         let a = a.file_name().unwrap().to_str().unwrap();
@@ -111,7 +111,9 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
 
         if index == 0 {
             if path.is_dir() {
-                write!(handle, "{}└── {}", prefix, output_str)?;
+                write!(handle, "{}└── ", prefix)?;
+                handle.set_color(ColorSpec::new().set_fg(Some(Color::Blue)))?;
+                write!(handle, "{}", output_str)?;
                 walk_tree(
                     handle,
                     args,
@@ -124,7 +126,9 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                 writeln!(handle, "{}└── {}", prefix, output_str)?;
             }
         } else if path.is_dir() {
-            write!(handle, "{}├── {}", prefix, output_str)?;
+            write!(handle, "{}├── ", prefix)?;
+            handle.set_color(ColorSpec::new().set_fg(Some(Color::Blue)))?;
+            write!(handle, "{}", output_str)?;
             walk_tree(
                 handle,
                 args,

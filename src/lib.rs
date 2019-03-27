@@ -35,12 +35,6 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
         }
     }
 
-    if let Some(file_limit) = args.file_limit {
-        if fs::read_dir(&root)?.count() > file_limit {
-            return Ok(());
-        }
-    }
-
     let mut paths = fs::read_dir(&root)?
         .filter_map(|entry| {
             let entry = entry.unwrap();
@@ -74,6 +68,22 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
         .map(|entry| entry.path())
         .collect::<Vec<PathBuf>>();
 
+    if let Some(file_limit) = args.file_limit {
+        let file_count = paths.len();
+        if file_count > file_limit {
+            writeln!(
+                handle,
+                " [{} entries exceeds filelimit, not opening dir]",
+                file_count
+            )?;
+            return Ok(());
+        } else {
+            writeln!(handle)?;
+        }
+    } else {
+        writeln!(handle)?;
+    }
+
     paths.sort_by(|a, b| {
         let a = a.file_name().unwrap().to_str().unwrap();
         let b = b.file_name().unwrap().to_str().unwrap();
@@ -101,7 +111,7 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
 
         if index == 0 {
             if path.is_dir() {
-                writeln!(handle, "{}└── {}", prefix, output_str)?;
+                write!(handle, "{}└── {}", prefix, output_str)?;
                 walk_tree(
                     handle,
                     args,
@@ -114,7 +124,7 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                 writeln!(handle, "{}└── {}", prefix, output_str)?;
             }
         } else if path.is_dir() {
-            writeln!(handle, "{}├── {}", prefix, output_str)?;
+            write!(handle, "{}├── {}", prefix, output_str)?;
             walk_tree(
                 handle,
                 args,

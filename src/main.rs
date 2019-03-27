@@ -16,7 +16,7 @@ fn main() -> Result<(), ExitFailure> {
     let stdout = stdout();
     let mut handle = stdout.lock();
 
-    writeln!(handle, "{}", root.to_str().unwrap())?;
+    write!(handle, "{}", root.to_str().unwrap())?;
 
     tree::walk_tree(
         &mut handle,

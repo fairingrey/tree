@@ -123,7 +123,9 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                     counts,
                 )?;
             } else {
-                writeln!(handle, "{}└── {}", prefix, output_str)?;
+                write!(handle, "{}└── ", prefix)?;
+                // TODO: set color for special files
+                writeln!(handle, "{}", output_str)?;
             }
         } else if path.is_dir() {
             write!(handle, "{}├── ", prefix)?;
@@ -138,14 +140,16 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
                 counts,
             )?;
         } else {
-            writeln!(handle, "{}├── {}", prefix, output_str)?;
+            write!(handle, "{}├── ", prefix)?;
+            // TODO: set color for special files
+            writeln!(handle, "{}", output_str)?;
         }
     }
 
     Ok(())
 }
 
-pub fn is_hidden(entry: &DirEntry) -> bool {
+fn is_hidden(entry: &DirEntry) -> bool {
     entry
         .file_name()
         .to_str()

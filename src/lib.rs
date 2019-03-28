@@ -33,6 +33,7 @@ pub fn walk_tree<P: AsRef<Path> + ToString>(
 
     if let Some(max_depth) = args.max_depth {
         if current_depth > max_depth {
+            writeln!(handle)?;
             return Ok(());
         }
     }

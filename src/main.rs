@@ -2,7 +2,7 @@ use exitfailure::ExitFailure;
 use std::io::Write;
 use std::path::PathBuf;
 use structopt::StructOpt;
-use termcolor::{ColorChoice, StandardStream};
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 use tree::{self, Counts};
 
 fn main() -> Result<(), ExitFailure> {
@@ -17,6 +17,7 @@ fn main() -> Result<(), ExitFailure> {
     let stdout = StandardStream::stdout(ColorChoice::Always);
     let mut handle = stdout.lock();
 
+    handle.set_color(ColorSpec::new().set_fg(Some(Color::Blue)))?;
     write!(handle, "{}", root.to_str().unwrap())?;
 
     tree::walk_tree(
